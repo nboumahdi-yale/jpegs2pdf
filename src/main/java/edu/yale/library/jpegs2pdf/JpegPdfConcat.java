@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import javax.imageio.ImageIO;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDPageContentStream.AppendMode;
@@ -31,7 +32,15 @@ public class JpegPdfConcat {
 	public void generatePdf(File destinationFile) throws IOException {
 		long start = System.currentTimeMillis();
 		PDDocument document = new PDDocument();
+		PDDocumentInformation info = document.getDocumentInformation();
+		if (caption != null ) info.setTitle(caption);
 		if (this.properties != null) {
+			if ( this.properties.containsKey("Author") ) {
+				info.setAuthor(this.properties.get("Author"));
+			}
+			if ( this.properties.containsKey("Subject") ) {
+				info.setSubject(this.properties.get("Subject"));
+			}
 			addCoverPageToPDDocument(document);
 		}
 		for (JpegPdfPage page : pages) {
