@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.List;
 import java.util.Map;
 import javax.imageio.ImageIO;
@@ -24,14 +23,64 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 public class JpegPdfConcat {
 
 	private List<JpegPdfPage> pages = new ArrayList<JpegPdfPage>();
+	private boolean generateCoverPage;
 	private Map<String, String> properties;
 	private String caption;
 	private String logoImageFile;
 	private String logoText;
 
+	public boolean isGenerateCoverPage() {
+		return generateCoverPage;
+	}
+
+	public void setGenerateCoverPage(boolean generateCoverPage) {
+		this.generateCoverPage = generateCoverPage;
+	}
+
+	public Map<String, String> getProperties() {
+		return properties;
+	}
+
+	public void setProperties(Map<String, String> properties) {
+		this.properties = properties;
+	}
+
+	public String getCaption() {
+		return caption;
+	}
+
+	public void setCaption(String caption) {
+		this.caption = caption;
+	}
+
+	public String getLogoImageFile() {
+		return logoImageFile;
+	}
+
+	public void setLogoImageFile(String logoImageFile) {
+		this.logoImageFile = logoImageFile;
+	}
+
+	public String getLogoText() {
+		return logoText;
+	}
+
+	public void setLogoText(String logoText) {
+		this.logoText = logoText;
+	}
+
 	public void generatePdf(File destinationFile) throws IOException {
+		this.generatePdf(destinationFile, null);
+	}
+
+	public void generatePdf(File destinationFile, File appendPdfFile) throws IOException {
 		long start = System.currentTimeMillis();
-		PDDocument document = new PDDocument();
+		PDDocument document = null;
+		if (appendPdfFile != null ) {
+		    document = PDDocument.load(appendPdfFile);
+		} else {
+			document = new PDDocument();
+		}
 		PDDocumentInformation info = document.getDocumentInformation();
 		if (caption != null ) info.setTitle(caption);
 		if (this.properties != null) {
@@ -41,6 +90,8 @@ public class JpegPdfConcat {
 			if ( this.properties.containsKey("Subject") ) {
 				info.setSubject(this.properties.get("Subject"));
 			}
+		}
+		if ( generateCoverPage ) {
 			addCoverPageToPDDocument(document);
 		}
 		for (JpegPdfPage page : pages) {
@@ -51,14 +102,14 @@ public class JpegPdfConcat {
 		long time = System.currentTimeMillis() - start;
 		System.out.println("Generated: " + pages.size() + " in " + time + " at " + (time / pages.size()));
 	}
-
-	public void setupCoverPage(String caption, Map<String, String> properties, String logoImageFile,
-			String logoText) {
-		this.properties = properties;
-		this.caption = caption;
-		this.logoImageFile = logoImageFile;
-		this.logoText = logoText;
-	}
+//
+//	public void setupCoverPage(String caption, Map<String, String> properties, String logoImageFile,
+//			String logoText) {
+//		this.properties = properties;
+//		this.caption = caption;
+//		this.logoImageFile = logoImageFile;
+//		this.logoText = logoText;
+//	}
 
 	public void addJpegPage(File jpegFile, String caption) {
 		addJpegPage(jpegFile, caption, null);

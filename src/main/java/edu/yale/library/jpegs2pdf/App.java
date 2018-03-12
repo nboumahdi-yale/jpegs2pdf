@@ -29,11 +29,16 @@ public class App {
 		JsonObject document = jsonReader.readObject();
 		jsonReader.close();
 		JsonArray pages = document.getJsonArray("pages");
-		if ( document.getBoolean("displayCoverPage", false) ) {
+		Map<String, String> documentProperties = null;
+		if ( document.containsKey("properties") ) {
 			JsonArray properties = document.getJsonArray("properties");
-			Map<String, String> documentProperties = mapFromJsonArray(properties);
-			pdfConcat.setupCoverPage(document.getString("title"), documentProperties, document.getString("logoImage"), document.getString("logoText"));
+			documentProperties = mapFromJsonArray(properties);
+			pdfConcat.setProperties(documentProperties);
 		}
+		pdfConcat.setGenerateCoverPage(	document.getBoolean("displayCoverPage", false) ); 
+		pdfConcat.setCaption(document.getString("title", "No Title") ); 
+		pdfConcat.setLogoImageFile(	document.getString("logoImage", null) );
+		pdfConcat.setLogoText(	document.getString("logoText", null) ); 
 		List<File> tempFiles = new ArrayList<File>();
 		for (JsonValue pageValue : pages) {
 			JsonObject page = (JsonObject) pageValue;
@@ -54,7 +59,11 @@ public class App {
 			}
 			pdfConcat.addJpegPage(new File(filename), page.getString("caption"), pageProperties);
 		}
-		pdfConcat.generatePdf(new File(args[1]));
+		if ( args.length > 2 ) {
+			pdfConcat.generatePdf(new File(args[1]), new File(args[2]));
+		} else {
+			pdfConcat.generatePdf(new File(args[1]));
+		}
 		for (File tempFile : tempFiles) {
 			tempFile.delete();
 		}
