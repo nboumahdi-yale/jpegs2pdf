@@ -90,7 +90,7 @@ public class JpegPdfConcat {
 			document = new PDDocument();
 		}
 		boldFont = PDType0Font.load(document, this.getClass().getResourceAsStream("/FreeSansBold.ttf"));
-		regFont = PDType0Font.load(document, this.getClass().getResourceAsStream("/FreeSans.ttf"));
+		regFont = PDType0Font.load(document, this.getClass().getResourceAsStream("/arialunicodems.ttf"));
 		PDDocumentInformation info = document.getDocumentInformation();
 		if (caption != null)
 			info.setTitle(caption);
@@ -217,15 +217,15 @@ public class JpegPdfConcat {
 		float margin = 50;
 		PDFont font = boldFont;
 		PDFont font2 = regFont;
-		float titleFontHeight = (font.getFontDescriptor().getCapHeight()) / 1000 * titleFontSize;
-		float fontHeight = (font.getFontDescriptor().getCapHeight()) / 1000 * fontSize;
+		float titleFontHeight = (font2.getFontDescriptor().getCapHeight()) / 1000 * titleFontSize;
+		float fontHeight = (font2.getFontDescriptor().getCapHeight()) / 1000 * fontSize;
 		contentStream.beginText();
-		contentStream.setFont(font, titleFontSize);
+		contentStream.setFont(font2, titleFontSize);
 		float titleLeading = titleFontHeight * 2;
 		float leading = fontHeight * 2;
 		contentStream.setLeading(titleLeading);
 		contentStream.newLineAtOffset(margin, PDRectangle.LETTER.getHeight() - topMargin - fontHeight);
-		yPos += drawWithWidth(contentStream, caption, PDRectangle.LETTER.getWidth() - 2 * margin, font, titleFontSize);
+		yPos += drawWithWidth(contentStream, caption, PDRectangle.LETTER.getWidth() - 2 * margin, font2, titleFontSize);
 		contentStream.newLine();
 		contentStream.setFont(font, fontSize);
 		contentStream.setLeading(leading);
