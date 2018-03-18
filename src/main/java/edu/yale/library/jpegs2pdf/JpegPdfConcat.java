@@ -9,13 +9,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.imageio.ImageIO;
+
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSString;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDPageContentStream.AppendMode;
+import org.apache.pdfbox.pdmodel.PDPageTree;
+import org.apache.pdfbox.pdmodel.common.PDMetadata;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
@@ -28,6 +34,8 @@ public class JpegPdfConcat {
 	private String caption;
 	private String logoImageFile;
 	private String logoText;
+	private PDFont boldFont;
+	private PDFont regFont;
 
 	public boolean isGenerateCoverPage() {
 		return generateCoverPage;
@@ -76,22 +84,25 @@ public class JpegPdfConcat {
 	public void generatePdf(File destinationFile, File appendPdfFile) throws IOException {
 		long start = System.currentTimeMillis();
 		PDDocument document = null;
-		if (appendPdfFile != null ) {
-		    document = PDDocument.load(appendPdfFile);
+		if (appendPdfFile != null) {
+			document = PDDocument.load(appendPdfFile);
 		} else {
 			document = new PDDocument();
 		}
+		boldFont = PDType0Font.load(document, this.getClass().getResourceAsStream("/FreeSansBold.ttf"));
+		regFont = PDType0Font.load(document, this.getClass().getResourceAsStream("/FreeSans.ttf"));
 		PDDocumentInformation info = document.getDocumentInformation();
-		if (caption != null ) info.setTitle(caption);
+		if (caption != null)
+			info.setTitle(caption);
 		if (this.properties != null) {
-			if ( this.properties.containsKey("Author") ) {
+			if (this.properties.containsKey("Author")) {
 				info.setAuthor(this.properties.get("Author"));
 			}
-			if ( this.properties.containsKey("Subject") ) {
+			if (this.properties.containsKey("Subject")) {
 				info.setSubject(this.properties.get("Subject"));
 			}
 		}
-		if ( generateCoverPage ) {
+		if (generateCoverPage) {
 			addCoverPageToPDDocument(document);
 		}
 		for (JpegPdfPage page : pages) {
@@ -102,14 +113,15 @@ public class JpegPdfConcat {
 		long time = System.currentTimeMillis() - start;
 		System.out.println("Generated: " + pages.size() + " in " + time + " at " + (time / pages.size()));
 	}
-//
-//	public void setupCoverPage(String caption, Map<String, String> properties, String logoImageFile,
-//			String logoText) {
-//		this.properties = properties;
-//		this.caption = caption;
-//		this.logoImageFile = logoImageFile;
-//		this.logoText = logoText;
-//	}
+	//
+	// public void setupCoverPage(String caption, Map<String, String> properties,
+	// String logoImageFile,
+	// String logoText) {
+	// this.properties = properties;
+	// this.caption = caption;
+	// this.logoImageFile = logoImageFile;
+	// this.logoText = logoText;
+	// }
 
 	public void addJpegPage(File jpegFile, String caption) {
 		addJpegPage(jpegFile, caption, null);
@@ -122,7 +134,7 @@ public class JpegPdfConcat {
 		page.properties = properties;
 		pages.add(page);
 	}
-	
+
 	private void addCoverPageToPDDocument(PDDocument document) throws IOException {
 		PDPage page = new PDPage(PDRectangle.LETTER);
 		document.addPage(page);
@@ -150,11 +162,11 @@ public class JpegPdfConcat {
 			if (logoText != null) {
 				contentStream.beginText();
 				int fontSize = 14;
-				PDFont font = PDType1Font.HELVETICA_BOLD;
+				PDFont font = boldFont;
 				contentStream.setFont(font, fontSize);
 
 				contentStream.newLineAtOffset(margin + w + 10, y + 10);
-				contentStream.showText(logoText);
+				contentStream.showText(logoText.replace("\u00a0", " "));
 				contentStream.endText();
 			}
 
@@ -164,9 +176,9 @@ public class JpegPdfConcat {
 		contentStream.close();
 	}
 
-	private float drawWithWidth(PDPageContentStream content, String text, float paragraphWidth, PDFont font, int fontSize)
-			throws IOException {
-		;
+	private float drawWithWidth(PDPageContentStream content, String text, float paragraphWidth, PDFont font,
+			int fontSize) throws IOException {
+		text = text.replace("\u00a0", " ");
 		int start = 0;
 		int end = 0;
 		float fontHeight = (font.getFontDescriptor().getCapHeight()) / 1000 * fontSize * (float) 1.5;
@@ -195,15 +207,16 @@ public class JpegPdfConcat {
 	}
 
 	private float drawPropertiesToContentStream(PDPageContentStream contentStream, String caption,
-			Map<String, String> properties,  int titleFontSize, int fontSize, float yPos) throws IOException {
+			Map<String, String> properties, int titleFontSize, int fontSize, float yPos) throws IOException {
 		return drawPropertiesToContentStream(contentStream, caption, properties, titleFontSize, fontSize, yPos, 50);
 	}
 
 	private float drawPropertiesToContentStream(PDPageContentStream contentStream, String caption,
-			Map<String, String> properties, int titleFontSize, int fontSize, float yPos, float topMargin) throws IOException {
+			Map<String, String> properties, int titleFontSize, int fontSize, float yPos, float topMargin)
+			throws IOException {
 		float margin = 50;
-		PDFont font = PDType1Font.HELVETICA_BOLD;
-		PDFont font2 = PDType1Font.HELVETICA;
+		PDFont font = boldFont;
+		PDFont font2 = regFont;
 		float titleFontHeight = (font.getFontDescriptor().getCapHeight()) / 1000 * titleFontSize;
 		float fontHeight = (font.getFontDescriptor().getCapHeight()) / 1000 * fontSize;
 		contentStream.beginText();
@@ -225,10 +238,10 @@ public class JpegPdfConcat {
 			float paraWidth = PDRectangle.LETTER.getWidth() - 2 * margin - maxTitleWidth;
 			for (Map.Entry<String, String> entry : properties.entrySet()) {
 				contentStream.setFont(font, fontSize);
-				contentStream.showText(entry.getKey());
+				contentStream.showText(entry.getKey().replace("\u00a0", " "));
 				contentStream.newLineAtOffset(maxTitleWidth, 0);
 				contentStream.setFont(font2, fontSize);
-				yPos += drawWithWidth(contentStream, entry.getValue(), paraWidth, font, fontSize);
+				yPos += drawWithWidth(contentStream, entry.getValue().replace("\u00a0", " "), paraWidth, font, fontSize);
 				// contentStream.drawString( entry.getValue() );
 				contentStream.newLineAtOffset(-maxTitleWidth, -fontHeight * (float) 2.2);
 				yPos += fontHeight * (float) 2.2;
@@ -240,7 +253,6 @@ public class JpegPdfConcat {
 		return yPos;
 
 	}
-
 
 	private class JpegPdfPage {
 		File jpegFile;
@@ -274,6 +286,12 @@ public class JpegPdfConcat {
 				}
 
 				PDImageXObject pdImageXObject = LosslessFactory.createFromImage(document, bimg);
+				String caption = properties.get("caption");
+				if ( caption != null ) {
+					PDMetadata metadata = new PDMetadata(document);
+					metadata.getCOSObject().setString("alt", caption);
+					pdImageXObject.setMetadata(metadata);
+				}
 				contentStream.drawImage(pdImageXObject, x, y, w, h);
 
 				contentStream.close();
